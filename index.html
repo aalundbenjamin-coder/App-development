@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+<meta charset="utf-8">
+<!-- Mobile-first: fill the phone screen, no zooming needed -->
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lønberegner</title>
+
+<style>
+  /* ---------- Farver og grundstil ---------- */
+  :root {
+    --bg:        #f4f5f7;
+    --card:      #ffffff;
+    --ink:       #14181f;
+    --muted:     #5c6572;
+    --line:      #dfe3e9;
+    --accent:    #14607a;
+    --accent-bg: #e7f2f6;
+    --warn:      #a4402a;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    padding: 16px;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    font-size: 17px;
+    line-height: 1.45;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  /* Indholdet centreres og bliver aldrig bredere end en smal spalte */
+  .wrap { max-width: 480px; margin: 0 auto; }
+
+  h1 { font-size: 1.35rem; margin: 4px 0 4px; }
+  .sub { color: var(--muted); font-size: 0.92rem; margin: 0 0 18px; }
+
+  .card {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 16px;
+    margin-bottom: 16px;
+  }
+
+  h2 {
+    font-size: 0.78rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin: 0 0 12px;
+  }
+
+  /* ---------- Indtastningsfelter ---------- */
+  .field { margin-bottom: 14px; }
+  .field:last-child { margin-bottom: 0; }
+
+  label {
+    display: block;
+    font-weight: 600;
+    font-size: 0.95rem;
+    margin-bottom: 6px;
+  }
+
+  /* Store felter = store tryk-flader på mobil (min. 52px høje) */
+  input {
+    width: 100%;
+    min-height: 52px;
+    padding: 12px 14px;
+    font-size: 1.15rem;
+    font-family: inherit;
+    color: var(--ink);
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    -webkit-appearance: none;
+    appearance: none;
+  }
+
+  input:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-bg);
+  }
+
+  /* Lille advarsel under et felt. Skjult indtil JS tænder den. */
+  .warn {
+    display: none;
+    margin: 6px 0 0;
+    font-size: 0.85rem;
+    color: var(--warn);
+  }
+  .warn.show { display: block; }
+
+  /* ---------- Resultater ---------- */
+  .row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 12px;
+    padding: 11px 0;
+    border-bottom: 1px solid var(--line);
+  }
+  .row:last-child { border-bottom: none; }
+
+  .row .label { color: var(--muted); font-size: 0.95rem; }
+  .row .value { font-variant-numeric: tabular-nums; font-weight: 600; white-space: nowrap; }
+
+  /* Bruttoløn fremhæves */
+  .row.total {
+    margin-top: 4px;
+    padding-top: 14px;
+    border-top: 2px solid var(--ink);
+    border-bottom: none;
+  }
+  .row.total .label { color: var(--ink); font-weight: 600; font-size: 1rem; }
+  .row.total .value { font-size: 1.5rem; color: var(--accent); }
+
+  .hint { color: var(--muted); font-size: 0.82rem; margin: 12px 0 0; }
+</style>
+</head>
+
+<body>
+<div class="wrap">
+
+  <h1>Lønberegner</h1>
+  <p class="sub">Bruttoløn ud fra timeløn plus tillæg på udvalgte timer.</p>
+
+  <!-- ================= SATSER ================= -->
+  <div class="card">
+    <h2>Satser</h2>
+
+    <div class="field">
+      <label for="baseRate">Timeløn (kr. pr. time)</label>
+      <!-- inputmode="decimal" giver tal-tastatur på telefonen.
+           type="text" (ikke number) så både 7,5 og 7.5 kan skrives. -->
+      <input id="baseRate" type="text" inputmode="decimal" value="150">
+    </div>
+
+    <div class="field">
+      <label for="surRate">Tillæg (kr. pr. time)</label>
+      <input id="surRate" type="text" inputmode="decimal" value="25">
+    </div>
+  </div>
+
+  <!-- ================= TIMER ================= -->
+  <div class="card">
+    <h2>Timer</h2>
+
+    <div class="field">
+      <label for="totalHours">Timer i alt</label>
+      <input id="totalHours" type="text" inputmode="decimal" placeholder="0" value="">
+    </div>
+
+    <div class="field">
+      <label for="surHours">Heraf timer med tillæg</label>
+      <input id="surHours" type="text" inputmode="decimal" placeholder="0" value="">
+      <!-- Vises kun hvis man skriver flere tillægstimer end timer i alt -->
+      <p class="warn" id="surWarn">Kan ikke overstige timer i alt &ndash; sat ned til <span id="capValue">0</span>.</p>
+    </div>
+  </div>
+
+  <!-- ================= RESULTAT ================= -->
+  <div class="card">
+    <h2>Resultat</h2>
+
+    <div class="row">
+      <span class="label">Grundløn</span>
+      <span class="value" id="outBase">0,00 kr.</span>
+    </div>
+    <div class="row">
+      <span class="label">Tillæg</span>
+      <span class="value" id="outSur">0,00 kr.</span>
+    </div>
+    <div class="row total">
+      <span class="label">Bruttoløn i alt</span>
+      <span class="value" id="outTotal">0,00 kr.</span>
+    </div>
+    <div class="row">
+      <span class="label">Effektiv timeløn</span>
+      <span class="value" id="outAvg">0,00 kr.</span>
+    </div>
+
+    <p class="hint">Beregningen er brutto, dvs. før skat, AM-bidrag og pension.</p>
+  </div>
+
+</div>
+
+<script>
+/* =========================================================
+   1) Genveje til elementerne på siden
+   ========================================================= */
+const el = id => document.getElementById(id);
+
+const baseRateEl  = el('baseRate');
+const surRateEl   = el('surRate');
+const totalHrsEl  = el('totalHours');
+const surHrsEl    = el('surHours');
+
+const surWarnEl   = el('surWarn');
+const capValueEl  = el('capValue');
+
+const outBase  = el('outBase');
+const outSur   = el('outSur');
+const outTotal = el('outTotal');
+const outAvg   = el('outAvg');
+
+/* =========================================================
+   2) Læs et tal fra et felt
+   Accepterer både 7,5 og 7.5. Tomt, sludder eller negativt
+   bliver til 0, så der aldrig kan stå NaN i resultatet.
+   ========================================================= */
+function parseNumber(text) {
+  const cleaned = String(text)
+    .replace(/\s/g, '')   // fjern mellemrum, fx "1 200"
+    .replace(',', '.');   // dansk komma -> punktum, som JS forstår
+
+  const n = parseFloat(cleaned);
+
+  if (!isFinite(n) || n < 0) return 0;   // tomt / ugyldigt / negativt = 0
+  return n;
+}
+
+/* =========================================================
+   3) Formatér et tal som dansk beløb: "1.234,50 kr."
+   Altid to decimaler, komma som decimaltegn.
+   ========================================================= */
+function formatKr(amount) {
+  const safe = isFinite(amount) ? amount : 0;   // ekstra sikring mod NaN
+
+  const formatted = safe.toLocaleString('da-DK', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  });
+
+  return formatted + ' kr.';
+}
+
+/* Vis et timetal pænt i advarslen: 8 -> "8", 7.5 -> "7,5" */
+function formatHours(hours) {
+  return String(hours).replace('.', ',');
+}
+
+/* =========================================================
+   4) Selve beregningen. Kaldes hver gang der tastes.
+   ========================================================= */
+function calculate(source) {
+  const baseRate  = parseNumber(baseRateEl.value);
+  const surRate   = parseNumber(surRateEl.value);
+  const totalHrs  = parseNumber(totalHrsEl.value);
+  let   surHrs    = parseNumber(surHrsEl.value);
+
+  // --- Loft: tillægstimer kan aldrig være flere end timer i alt ---
+  if (surHrs > totalHrs) {
+    surHrs = totalHrs;   // regnestykket bruger altid loftet
+
+    // Selve feltet rettes kun når man taster i tillægstimer-feltet.
+    // Skriver man i "timer i alt", får man lov at skrive færdig først -
+    // advarslen står der imens, og tallet bliver alligevel regnet med loftet.
+    if (source === surHrsEl) {
+      surHrsEl.value = formatHours(totalHrs);
+    }
+
+    capValueEl.textContent = formatHours(totalHrs);
+    surWarnEl.classList.add('show');
+  } else {
+    surWarnEl.classList.remove('show');
+  }
+
+  // --- De fire tal ---
+  const basePay  = totalHrs * baseRate;   // alle timer får grundsatsen
+  const surPay   = surHrs  * surRate;     // kun tillægstimerne får tillægget
+  const gross    = basePay + surPay;      // bruttoløn i alt
+
+  // Effektiv timeløn: undgå division med 0 når der ikke er skrevet timer ind
+  const avgRate  = totalHrs > 0 ? gross / totalHrs : 0;
+
+  // --- Skriv resultaterne på siden ---
+  outBase.textContent  = formatKr(basePay);
+  outSur.textContent   = formatKr(surPay);
+  outTotal.textContent = formatKr(gross);
+  outAvg.textContent   = formatKr(avgRate);
+}
+
+/* =========================================================
+   5) Live-opdatering: lyt på alle fire felter, og regn
+   én gang ved start så resultatet aldrig er tomt.
+   ========================================================= */
+[baseRateEl, surRateEl, totalHrsEl, surHrsEl].forEach(input => {
+  // event.target fortæller calculate() hvilket felt der blev tastet i
+  input.addEventListener('input', event => calculate(event.target));
+});
+
+calculate();   // regn én gang med det samme, så resultatet aldrig står tomt
+</script>
+</body>
+</html>
