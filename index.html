@@ -2,7 +2,7 @@
 <html lang="da">
 <head>
 <meta charset="utf-8">
-<!-- Mobile-first: fill the phone screen, no zooming needed -->
+<!-- Mobile-first: fyld telefonens skærm, ingen zoom nødvendig -->
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Lønberegner</title>
 
@@ -16,7 +16,6 @@
     --line:      #dfe3e9;
     --accent:    #14607a;
     --accent-bg: #e7f2f6;
-    --warn:      #a4402a;
   }
 
   * { box-sizing: border-box; }
@@ -32,10 +31,9 @@
     -webkit-text-size-adjust: 100%;
   }
 
-  /* Indholdet centreres og bliver aldrig bredere end en smal spalte */
-  .wrap { max-width: 480px; margin: 0 auto; }
+  .wrap { max-width: 520px; margin: 0 auto; }
 
-  h1 { font-size: 1.35rem; margin: 4px 0 4px; }
+  h1  { font-size: 1.35rem; margin: 4px 0 4px; }
   .sub { color: var(--muted); font-size: 0.92rem; margin: 0 0 18px; }
 
   .card {
@@ -54,23 +52,23 @@
     margin: 0 0 12px;
   }
 
-  /* ---------- Indtastningsfelter ---------- */
-  .field { margin-bottom: 14px; }
-  .field:last-child { margin-bottom: 0; }
-
+  /* ---------- Felter ---------- */
   label {
     display: block;
     font-weight: 600;
-    font-size: 0.95rem;
+    font-size: 0.9rem;
     margin-bottom: 6px;
   }
 
-  /* Store felter = store tryk-flader på mobil (min. 52px høje) */
-  input {
+  .field { margin-bottom: 14px; }
+  .field:last-child { margin-bottom: 0; }
+
+  /* Store felter = store tryk-flader på mobil (min. 52 px høje) */
+  input, select {
     width: 100%;
     min-height: 52px;
     padding: 12px 14px;
-    font-size: 1.15rem;
+    font-size: 1.1rem;
     font-family: inherit;
     color: var(--ink);
     background: #fff;
@@ -80,36 +78,99 @@
     appearance: none;
   }
 
-  input:focus {
+  select {
+    /* lille pil, så det ligner et dropdown-felt */
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'%3E%3Cpath fill='%235c6572' d='M1 1l5 5 5-5'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 16px center;
+    background-size: 12px;
+    padding-right: 40px;
+  }
+
+  input:focus, select:focus {
     outline: none;
     border-color: var(--accent);
     box-shadow: 0 0 0 3px var(--accent-bg);
   }
 
-  /* Lille advarsel under et felt. Skjult indtil JS tænder den. */
-  .warn {
-    display: none;
-    margin: 6px 0 0;
-    font-size: 0.85rem;
-    color: var(--warn);
-  }
-  .warn.show { display: block; }
+  /* Satser står to og to ved siden af hinanden */
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 
-  /* ---------- Resultater ---------- */
+  /* ---------- En vagt ---------- */
+  .shift {
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 12px;
+    margin-bottom: 12px;
+    background: #fbfcfd;
+  }
+
+  .shift-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+  }
+  .shift-head span {
+    font-size: 0.78rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--muted);
+    font-weight: 700;
+  }
+
+  /* Slet-knap: rund og stor nok til en tommelfinger */
+  .del {
+    width: 40px; height: 40px;
+    min-height: 40px;
+    padding: 0;
+    font-size: 1.3rem;
+    line-height: 1;
+    color: var(--muted);
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 50%;
+    cursor: pointer;
+  }
+  .del:active { background: var(--bg); }
+
+  /* Lille opsummering nederst i hver vagt */
+  .shift-sum {
+    margin-top: 10px;
+    font-size: 0.88rem;
+    color: var(--muted);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .add {
+    width: 100%;
+    min-height: 52px;
+    font-size: 1rem;
+    font-weight: 600;
+    font-family: inherit;
+    color: var(--accent);
+    background: var(--accent-bg);
+    border: 1px solid transparent;
+    border-radius: 10px;
+    cursor: pointer;
+  }
+  .add:active { filter: brightness(0.96); }
+
+  /* ---------- Resultat ---------- */
   .row {
     display: flex;
     justify-content: space-between;
     align-items: baseline;
     gap: 12px;
-    padding: 11px 0;
+    padding: 10px 0;
     border-bottom: 1px solid var(--line);
   }
   .row:last-child { border-bottom: none; }
 
-  .row .label { color: var(--muted); font-size: 0.95rem; }
+  .row .label { color: var(--muted); font-size: 0.93rem; }
+  .row .label small { display: block; font-size: 0.78rem; opacity: 0.8; }
   .row .value { font-variant-numeric: tabular-nums; font-weight: 600; white-space: nowrap; }
 
-  /* Bruttoløn fremhæves */
   .row.total {
     margin-top: 4px;
     padding-top: 14px;
@@ -119,7 +180,11 @@
   .row.total .label { color: var(--ink); font-weight: 600; font-size: 1rem; }
   .row.total .value { font-size: 1.5rem; color: var(--accent); }
 
+  /* Nul-linjer tones ned, så man ser hvad der faktisk er brugt */
+  .row.zero .value { color: var(--muted); font-weight: 500; }
+
   .hint { color: var(--muted); font-size: 0.82rem; margin: 12px 0 0; }
+  .hint b { color: var(--ink); }
 </style>
 </head>
 
@@ -127,40 +192,43 @@
 <div class="wrap">
 
   <h1>Lønberegner</h1>
-  <p class="sub">Bruttoløn ud fra timeløn plus tillæg på udvalgte timer.</p>
+  <p class="sub">Skriv dine vagter ind &ndash; tillæggene bliver lagt på automatisk.</p>
 
   <!-- ================= SATSER ================= -->
   <div class="card">
-    <h2>Satser</h2>
+    <h2>Satser (kr. pr. time)</h2>
 
     <div class="field">
-      <label for="baseRate">Timeløn (kr. pr. time)</label>
-      <!-- inputmode="decimal" giver tal-tastatur på telefonen.
-           type="text" (ikke number) så både 7,5 og 7.5 kan skrives. -->
-      <input id="baseRate" type="text" inputmode="decimal" value="150">
+      <label for="baseRate">Grundløn &ndash; alle timer</label>
+      <input id="baseRate" type="text" inputmode="decimal" value="220">
     </div>
 
-    <div class="field">
-      <label for="surRate">Tillæg (kr. pr. time)</label>
-      <input id="surRate" type="text" inputmode="decimal" value="25">
+    <div class="grid2">
+      <div class="field">
+        <label for="rateEve">Tillæg 14&ndash;18<br>hverdag</label>
+        <input id="rateEve" type="text" inputmode="decimal" value="74">
+      </div>
+      <div class="field">
+        <label for="rateNight">Tillæg 18&ndash;06<br>alle dage</label>
+        <input id="rateNight" type="text" inputmode="decimal" value="143">
+      </div>
+      <div class="field">
+        <label for="rateWeekend">Weekendtillæg<br>lør 06&ndash;18, søn 06&ndash;12</label>
+        <input id="rateWeekend" type="text" inputmode="decimal" value="114">
+      </div>
+      <div class="field">
+        <label for="rateSunPm">Søndag 12&ndash;18<br>tillæg</label>
+        <input id="rateSunPm" type="text" inputmode="decimal" value="143">
+      </div>
     </div>
   </div>
 
-  <!-- ================= TIMER ================= -->
+  <!-- ================= VAGTER ================= -->
   <div class="card">
-    <h2>Timer</h2>
-
-    <div class="field">
-      <label for="totalHours">Timer i alt</label>
-      <input id="totalHours" type="text" inputmode="decimal" placeholder="0" value="">
-    </div>
-
-    <div class="field">
-      <label for="surHours">Heraf timer med tillæg</label>
-      <input id="surHours" type="text" inputmode="decimal" placeholder="0" value="">
-      <!-- Vises kun hvis man skriver flere tillægstimer end timer i alt -->
-      <p class="warn" id="surWarn">Kan ikke overstige timer i alt &ndash; sat ned til <span id="capValue">0</span>.</p>
-    </div>
+    <h2>Vagter</h2>
+    <!-- Vagt-rækkerne bliver bygget af JavaScript her -->
+    <div id="shifts"></div>
+    <button class="add" id="addShift" type="button">+ Tilføj vagt</button>
   </div>
 
   <!-- ================= RESULTAT ================= -->
@@ -168,13 +236,30 @@
     <h2>Resultat</h2>
 
     <div class="row">
-      <span class="label">Grundløn</span>
-      <span class="value" id="outBase">0,00 kr.</span>
+      <span class="label">Timer i alt</span>
+      <span class="value" id="outHours">0,00 t</span>
     </div>
     <div class="row">
-      <span class="label">Tillæg</span>
-      <span class="value" id="outSur">0,00 kr.</span>
+      <span class="label">Grundløn<small id="lblBase">alle timer</small></span>
+      <span class="value" id="outBase">0,00 kr.</span>
     </div>
+    <div class="row" id="rowEve">
+      <span class="label">Tillæg 14&ndash;18<small id="lblEve">0,00 t</small></span>
+      <span class="value" id="outEve">0,00 kr.</span>
+    </div>
+    <div class="row" id="rowNight">
+      <span class="label">Tillæg 18&ndash;06<small id="lblNight">0,00 t</small></span>
+      <span class="value" id="outNight">0,00 kr.</span>
+    </div>
+    <div class="row" id="rowWeekend">
+      <span class="label">Weekendtillæg<small id="lblWeekend">0,00 t</small></span>
+      <span class="value" id="outWeekend">0,00 kr.</span>
+    </div>
+    <div class="row" id="rowSunPm">
+      <span class="label">Søndag 12&ndash;18<small id="lblSunPm">0,00 t</small></span>
+      <span class="value" id="outSunPm">0,00 kr.</span>
+    </div>
+
     <div class="row total">
       <span class="label">Bruttoløn i alt</span>
       <span class="value" id="outTotal">0,00 kr.</span>
@@ -184,117 +269,262 @@
       <span class="value" id="outAvg">0,00 kr.</span>
     </div>
 
-    <p class="hint">Beregningen er brutto, dvs. før skat, AM-bidrag og pension.</p>
+    <p class="hint">
+      Beregningen er brutto, dvs. før skat, AM-bidrag og pension.
+      <b>Bemærk:</b> 18&ndash;06 giver nattillæg alle ugedage &ndash; også nat til
+      og efter lørdag og søndag. Vagter over midnat regnes videre på næste dags satser.
+    </p>
   </div>
 
 </div>
 
 <script>
 /* =========================================================
-   1) Genveje til elementerne på siden
+   1) Hjælpefunktioner: læs tal, skriv beløb og timer pænt
    ========================================================= */
 const el = id => document.getElementById(id);
 
-const baseRateEl  = el('baseRate');
-const surRateEl   = el('surRate');
-const totalHrsEl  = el('totalHours');
-const surHrsEl    = el('surHours');
-
-const surWarnEl   = el('surWarn');
-const capValueEl  = el('capValue');
-
-const outBase  = el('outBase');
-const outSur   = el('outSur');
-const outTotal = el('outTotal');
-const outAvg   = el('outAvg');
-
-/* =========================================================
-   2) Læs et tal fra et felt
-   Accepterer både 7,5 og 7.5. Tomt, sludder eller negativt
-   bliver til 0, så der aldrig kan stå NaN i resultatet.
-   ========================================================= */
+/* Læs et tal fra et felt.
+   Accepterer både 7,5 og 7.5. Tomt, sludder eller negativt bliver
+   til 0, så der aldrig kan stå NaN i resultatet. */
 function parseNumber(text) {
   const cleaned = String(text)
     .replace(/\s/g, '')   // fjern mellemrum, fx "1 200"
     .replace(',', '.');   // dansk komma -> punktum, som JS forstår
 
   const n = parseFloat(cleaned);
-
-  if (!isFinite(n) || n < 0) return 0;   // tomt / ugyldigt / negativt = 0
+  if (!isFinite(n) || n < 0) return 0;
   return n;
 }
 
-/* =========================================================
-   3) Formatér et tal som dansk beløb: "1.234,50 kr."
-   Altid to decimaler, komma som decimaltegn.
-   ========================================================= */
+/* Dansk beløb med to decimaler: 1234.5 -> "1.234,50 kr." */
 function formatKr(amount) {
-  const safe = isFinite(amount) ? amount : 0;   // ekstra sikring mod NaN
-
-  const formatted = safe.toLocaleString('da-DK', {
+  const safe = isFinite(amount) ? amount : 0;
+  return safe.toLocaleString('da-DK', {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2
+  }) + ' kr.';
+}
+
+/* Timetal med to decimaler: 7.5 -> "7,50 t" */
+function formatHours(hours) {
+  const safe = isFinite(hours) ? hours : 0;
+  return safe.toLocaleString('da-DK', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  }) + ' t';
+}
+
+/* Lav "07:30" om til minutter siden midnat (450).
+   Tomt eller ugyldigt giver null, så vagten tæller som 0 timer. */
+function parseTime(text) {
+  const match = /^(\d{1,2}):(\d{2})$/.exec(String(text).trim());
+  if (!match) return null;
+
+  const hours   = Number(match[1]);
+  const minutes = Number(match[2]);
+  if (hours > 23 || minutes > 59) return null;
+
+  return hours * 60 + minutes;
+}
+
+/* =========================================================
+   2) Tillægsreglerne
+   Hver eneste minut i en vagt får ét af disse "stempler".
+   Rækkefølgen i funktionen er reglernes rangorden.
+   ========================================================= */
+const DAYS = ['Mandag','Tirsdag','Onsdag','Torsdag','Fredag','Lørdag','Søndag'];
+
+const SATURDAY = 5;   // plads 5 i DAYS
+const SUNDAY   = 6;   // plads 6 i DAYS
+
+function bandFor(dayIndex, minuteOfDay) {
+  const hour = minuteOfDay / 60;   // fx 810 minutter = kl. 13,5
+
+  // Regel 1: 18-06 er nattillæg - og det gælder alle ugedage
+  if (hour < 6 || hour >= 18) return 'night';
+
+  // Herfra er klokken mellem 06 og 18
+  if (dayIndex === SATURDAY) return 'weekend';              // lør 06-18
+  if (dayIndex === SUNDAY)   return hour < 12 ? 'weekend'   // søn 06-12
+                                              : 'sunPm';    // søn 12-18
+
+  // Hverdag mellem 06 og 18
+  if (hour >= 14) return 'eve';   // hverdag 14-18
+  return 'plain';                 // hverdag 06-14: intet tillæg
+}
+
+/* =========================================================
+   3) Vagt-rækkerne i UI'et
+   ========================================================= */
+const shiftsBox = el('shifts');
+
+/* Tilføj en tom vagt-række til siden */
+function addShift(day = 0, from = '', to = '') {
+  const box = document.createElement('div');
+  box.className = 'shift';
+
+  box.innerHTML = `
+    <div class="shift-head">
+      <span class="shift-title">Vagt</span>
+      <button class="del" type="button" title="Slet vagt">&times;</button>
+    </div>
+
+    <div class="field">
+      <label>Ugedag</label>
+      <select class="day">
+        ${DAYS.map((name, i) =>
+          `<option value="${i}"${i === day ? ' selected' : ''}>${name}</option>`
+        ).join('')}
+      </select>
+    </div>
+
+    <div class="grid2">
+      <div class="field">
+        <label>Fra</label>
+        <input class="from" type="time" value="${from}">
+      </div>
+      <div class="field">
+        <label>Til</label>
+        <input class="to" type="time" value="${to}">
+      </div>
+    </div>
+
+    <div class="shift-sum">0,00 t &middot; 0,00 kr.</div>
+  `;
+
+  // Slet-knappen fjerner rækken (der skal altid være mindst én tilbage)
+  box.querySelector('.del').addEventListener('click', () => {
+    box.remove();
+    if (!shiftsBox.children.length) addShift();
+    calculate();
   });
 
-  return formatted + ' kr.';
-}
-
-/* Vis et timetal pænt i advarslen: 8 -> "8", 7.5 -> "7,5" */
-function formatHours(hours) {
-  return String(hours).replace('.', ',');
+  shiftsBox.appendChild(box);
+  return box;
 }
 
 /* =========================================================
-   4) Selve beregningen. Kaldes hver gang der tastes.
+   4) Beregn én vagt
+   Vi går minut for minut gennem vagten og lægger hvert minut
+   i den rigtige tillægs-bunke. Så rammer vi altid grænserne
+   præcist - også når en vagt løber over midnat.
    ========================================================= */
-function calculate(source) {
-  const baseRate  = parseNumber(baseRateEl.value);
-  const surRate   = parseNumber(surRateEl.value);
-  const totalHrs  = parseNumber(totalHrsEl.value);
-  let   surHrs    = parseNumber(surHrsEl.value);
+function minutesPerBand(dayIndex, from, to) {
+  const bands = { plain: 0, eve: 0, night: 0, weekend: 0, sunPm: 0 };
 
-  // --- Loft: tillægstimer kan aldrig være flere end timer i alt ---
-  if (surHrs > totalHrs) {
-    surHrs = totalHrs;   // regnestykket bruger altid loftet
+  // Mangler et klokkeslæt? Så tæller vagten som 0 timer.
+  if (from === null || to === null) return bands;
 
-    // Selve feltet rettes kun når man taster i tillægstimer-feltet.
-    // Skriver man i "timer i alt", får man lov at skrive færdig først -
-    // advarslen står der imens, og tallet bliver alligevel regnet med loftet.
-    if (source === surHrsEl) {
-      surHrsEl.value = formatHours(totalHrs);
-    }
+  // Slutter vagten før eller på starttidspunktet, går den over midnat.
+  // "22:00 til 06:00" bliver altså til 480 minutter, ikke minus 960.
+  let length = to - from;
+  if (length <= 0) length += 24 * 60;
 
-    capValueEl.textContent = formatHours(totalHrs);
-    surWarnEl.classList.add('show');
-  } else {
-    surWarnEl.classList.remove('show');
+  for (let i = 0; i < length; i++) {
+    const absolute = from + i;                              // minutter fra vagtens startdøgn
+    const day      = (dayIndex + Math.floor(absolute / 1440)) % 7;  // ruller til næste ugedag
+    const minute   = absolute % 1440;                       // klokkeslæt på det døgn
+
+    bands[bandFor(day, minute)]++;
   }
 
-  // --- De fire tal ---
-  const basePay  = totalHrs * baseRate;   // alle timer får grundsatsen
-  const surPay   = surHrs  * surRate;     // kun tillægstimerne får tillægget
-  const gross    = basePay + surPay;      // bruttoløn i alt
-
-  // Effektiv timeløn: undgå division med 0 når der ikke er skrevet timer ind
-  const avgRate  = totalHrs > 0 ? gross / totalHrs : 0;
-
-  // --- Skriv resultaterne på siden ---
-  outBase.textContent  = formatKr(basePay);
-  outSur.textContent   = formatKr(surPay);
-  outTotal.textContent = formatKr(gross);
-  outAvg.textContent   = formatKr(avgRate);
+  return bands;
 }
 
 /* =========================================================
-   5) Live-opdatering: lyt på alle fire felter, og regn
-   én gang ved start så resultatet aldrig er tomt.
+   5) Saml det hele og skriv resultatet på siden
    ========================================================= */
-[baseRateEl, surRateEl, totalHrsEl, surHrsEl].forEach(input => {
-  // event.target fortæller calculate() hvilket felt der blev tastet i
-  input.addEventListener('input', event => calculate(event.target));
+function calculate() {
+  // Satserne, som de står i felterne lige nu
+  const base = parseNumber(el('baseRate').value);
+  const rate = {
+    plain:   0,                                   // hverdag 06-14: intet tillæg
+    eve:     parseNumber(el('rateEve').value),     // hverdag 14-18
+    night:   parseNumber(el('rateNight').value),   // alle dage 18-06
+    weekend: parseNumber(el('rateWeekend').value), // lør 06-18 + søn 06-12
+    sunPm:   parseNumber(el('rateSunPm').value)    // søn 12-18
+  };
+
+  // Læg alle vagternes minutter sammen, bunke for bunke
+  const total = { plain: 0, eve: 0, night: 0, weekend: 0, sunPm: 0 };
+
+  Array.from(shiftsBox.children).forEach((box, index) => {
+    const day  = Number(box.querySelector('.day').value);
+    const from = parseTime(box.querySelector('.from').value);
+    const to   = parseTime(box.querySelector('.to').value);
+
+    const bands = minutesPerBand(day, from, to);
+
+    // Vagtens egne tal, så man kan tjekke hver linje for sig
+    let shiftMinutes = 0;
+    let shiftPay     = 0;
+    for (const key in bands) {
+      shiftMinutes += bands[key];
+      shiftPay     += (bands[key] / 60) * (base + rate[key]);
+      total[key]   += bands[key];
+    }
+
+    box.querySelector('.shift-title').textContent = 'Vagt ' + (index + 1);
+    box.querySelector('.shift-sum').textContent =
+      formatHours(shiftMinutes / 60) + ' · ' + formatKr(shiftPay);
+  });
+
+  // Minutter om til timer
+  const hours = {};
+  let hoursAll = 0;
+  for (const key in total) {
+    hours[key] = total[key] / 60;
+    hoursAll  += hours[key];
+  }
+
+  // De enkelte beløb
+  const basePay = hoursAll * base;                  // grundløn på ALLE timer
+  const payEve     = hours.eve     * rate.eve;      // og oveni: tillæg pr. bunke
+  const payNight   = hours.night   * rate.night;
+  const payWeekend = hours.weekend * rate.weekend;
+  const paySunPm   = hours.sunPm   * rate.sunPm;
+
+  const gross = basePay + payEve + payNight + payWeekend + paySunPm;
+  const avg   = hoursAll > 0 ? gross / hoursAll : 0;   // undgå division med 0
+
+  // Skriv tallene på siden
+  el('outHours').textContent = formatHours(hoursAll);
+  el('outBase').textContent  = formatKr(basePay);
+  el('lblBase').textContent  = formatHours(hoursAll) + ' × ' + formatKr(base);
+
+  // Hjælper: skriv én tillægslinje, og ton den ned hvis den er tom
+  function showBand(rowId, outId, lblId, bandHours, bandRate, bandPay) {
+    el(outId).textContent = formatKr(bandPay);
+    el(lblId).textContent = formatHours(bandHours) + ' × ' + formatKr(bandRate);
+    el(rowId).classList.toggle('zero', bandHours === 0);
+  }
+
+  showBand('rowEve',     'outEve',     'lblEve',     hours.eve,     rate.eve,     payEve);
+  showBand('rowNight',   'outNight',   'lblNight',   hours.night,   rate.night,   payNight);
+  showBand('rowWeekend', 'outWeekend', 'lblWeekend', hours.weekend, rate.weekend, payWeekend);
+  showBand('rowSunPm',   'outSunPm',   'lblSunPm',   hours.sunPm,   rate.sunPm,   paySunPm);
+
+  el('outTotal').textContent = formatKr(gross);
+  el('outAvg').textContent   = formatKr(avg);
+}
+
+/* =========================================================
+   6) Live-opdatering
+   Ét enkelt lyt på hele siden fanger også de vagt-felter,
+   der først bliver oprettet senere.
+   ========================================================= */
+document.addEventListener('input',  calculate);
+document.addEventListener('change', calculate);
+
+el('addShift').addEventListener('click', () => {
+  addShift();
+  calculate();
 });
 
-calculate();   // regn én gang med det samme, så resultatet aldrig står tomt
+// Start med én tom vagt, og regn med det samme
+addShift();
+calculate();
 </script>
 </body>
 </html>
