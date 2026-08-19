@@ -13,11 +13,12 @@
     --card:      #ffffff;
     --ink:       #14181f;
     --muted:     #5c6572;
-    --ghost:     #9aa3ae;   /* de grå "skygge-tal" i satsfelterne */
+    --ghost:     #9aa3ae;   /* de grå "skygge-tal" i felterne */
     --line:      #dfe3e9;
     --accent:    #14607a;
     --accent-bg: #e7f2f6;
-    --warn:      #a4402a;
+    --minus:     #a4402a;   /* fradrag og skat, dvs. det der trækkes fra */
+    --net:       #1f6b45;   /* det der faktisk bliver udbetalt */
   }
 
   * { box-sizing: border-box; }
@@ -77,7 +78,7 @@
     font-variant-numeric: tabular-nums;
   }
 
-  /* Store felter = store tryk-flader på mobil (min. 52 px høje) */
+  /* Store felter = store tryk-flader på mobil */
   input {
     width: 100%;
     min-height: 56px;
@@ -113,11 +114,11 @@
     display: none;
     margin: 6px 0 0;
     font-size: 0.85rem;
-    color: var(--warn);
+    color: var(--minus);
   }
   .warn.show { display: block; }
 
-  /* ---------- Resultat ---------- */
+  /* ---------- Resultat-linjer ---------- */
   .row {
     display: flex;
     justify-content: space-between;
@@ -132,6 +133,7 @@
   .row .label small { display: block; font-size: 0.78rem; opacity: 0.8; }
   .row .value { font-variant-numeric: tabular-nums; font-weight: 600; white-space: nowrap; }
 
+  /* Sammentælling: brutto */
   .row.total {
     margin-top: 4px;
     padding-top: 14px;
@@ -141,10 +143,32 @@
   .row.total .label { color: var(--ink); font-weight: 600; font-size: 1rem; }
   .row.total .value { font-size: 1.5rem; color: var(--accent); }
 
-  /* Linjer uden timer tones ned, så man ser hvad der faktisk er brugt */
+  /* Det der bliver udbetalt til sidst */
+  .row.net {
+    margin-top: 4px;
+    padding-top: 14px;
+    border-top: 2px solid var(--ink);
+    border-bottom: none;
+  }
+  .row.net .label { color: var(--ink); font-weight: 600; font-size: 1rem; }
+  .row.net .value { font-size: 1.5rem; color: var(--net); }
+
+  /* Linjer der trækkes fra */
+  .row.minus .value { color: var(--minus); }
+
+  /* Mellemresultat, fx grundlaget efter AM-bidrag */
+  .row.sub .label, .row.sub .value { font-style: italic; }
+
+  /* Linjer uden indhold tones ned */
   .row.zero { opacity: 0.45; }
 
-  /* ---------- Satser (foldet sammen) ---------- */
+  /* ---------- Satser og skattefelter ---------- */
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .rate { margin-bottom: 12px; }
+  .rate label { display: block; font-weight: 600; font-size: 0.85rem; margin-bottom: 6px; }
+  .rate label small { display: block; font-weight: 400; color: var(--muted); font-size: 0.76rem; }
+  .rate input { min-height: 52px; font-size: 1.1rem; }
+
   details.card { padding: 0; }
   details.card summary {
     padding: 16px;
@@ -164,10 +188,6 @@
   details.card summary::after { content: '+'; font-size: 1.3rem; line-height: 1; }
   details.card[open] summary::after { content: '\2212'; }
   .rates { padding: 0 16px 16px; }
-  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-  .rate label { display: block; font-weight: 600; font-size: 0.85rem; margin-bottom: 6px; }
-  .rate { margin-bottom: 12px; }
-  .rate input { min-height: 52px; font-size: 1.1rem; }
 
   .hint { color: var(--muted); font-size: 0.82rem; margin: 12px 0 0; }
   .hint b { color: var(--ink); }
@@ -189,22 +209,26 @@
     margin: 0 auto;
     display: flex;
     justify-content: space-between;
-    align-items: center;
-    gap: 12px;
+    align-items: flex-end;
+    gap: 10px;
   }
   .bar .cap {
-    font-size: 0.72rem;
-    letter-spacing: 0.08em;
+    font-size: 0.68rem;
+    letter-spacing: 0.07em;
     text-transform: uppercase;
     opacity: 0.65;
+    white-space: nowrap;
   }
-  .bar .big {
-    font-size: 1.45rem;
-    font-weight: 700;
-    font-variant-numeric: tabular-nums;
-  }
-  .bar .mid { font-size: 1.05rem; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .bar .num { font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .bar .small { font-size: 0.95rem; font-weight: 600; }
+  .bar .big   { font-size: 1.35rem; font-weight: 700; }
   .bar .right { text-align: right; }
+
+  /* På meget smalle telefoner ryger timetallet ud, så beløbene får plads */
+  @media (max-width: 380px) {
+    .bar .drop { display: none; }
+    .bar .big { font-size: 1.25rem; }
+  }
 </style>
 </head>
 
@@ -269,9 +293,67 @@
     </div>
   </div>
 
-  <!-- ================= RESULTAT ================= -->
+  <!-- ================= EFTER SKAT ================= -->
   <div class="card">
-    <h2>Resultat</h2>
+    <h2>Efter skat</h2>
+
+    <div class="grid2">
+      <div class="rate">
+        <label for="rTax">Trækprocent<small>din skatteprocent</small></label>
+        <input id="rTax" type="text" inputmode="decimal" placeholder="43">
+      </div>
+      <div class="rate">
+        <label for="rFradrag">Fradrag<small>for perioden, pr. måned</small></label>
+        <input id="rFradrag" type="text" inputmode="decimal" placeholder="5500">
+      </div>
+    </div>
+
+    <div class="row">
+      <span class="label">Bruttoløn</span>
+      <span class="value" id="taxGross">0,00 kr.</span>
+    </div>
+    <div class="row minus">
+      <span class="label">AM-bidrag<small id="lblAm">8 % af bruttoløn</small></span>
+      <span class="value" id="taxAm">0,00 kr.</span>
+    </div>
+    <div class="row sub">
+      <span class="label">Grundlag efter AM-bidrag</span>
+      <span class="value" id="taxBasis">0,00 kr.</span>
+    </div>
+    <div class="row minus">
+      <span class="label">Fradrag<small>trækkes fra før skatten</small></span>
+      <span class="value" id="taxDeduction">0,00 kr.</span>
+    </div>
+    <div class="row sub">
+      <span class="label">Til beskatning</span>
+      <span class="value" id="taxTaxable">0,00 kr.</span>
+    </div>
+    <div class="row minus">
+      <span class="label">A-skat<small id="lblTax">43 % af beløbet til beskatning</small></span>
+      <span class="value" id="taxAmount">0,00 kr.</span>
+    </div>
+
+    <div class="row net">
+      <span class="label">Udbetalt</span>
+      <span class="value" id="outNet">0,00 kr.</span>
+    </div>
+    <div class="row">
+      <span class="label">Timeløn efter skat</span>
+      <span class="value" id="outNetHour">0,00 kr.</span>
+    </div>
+
+    <p class="hint">
+      <b>Sådan regnes der:</b> AM-bidrag på 8 % trækkes først af bruttolønnen.
+      Derefter trækkes fradraget fra, og trækprocenten lægges på resten.
+      Fradraget er et månedsfradrag, så tallene passer, når timerne dækker
+      én måned. Regner du en halv måned, så skriv det halve fradrag.
+      Pension og ATP er ikke regnet med.
+    </p>
+  </div>
+
+  <!-- ================= BRUTTO-SPECIFIKATION ================= -->
+  <div class="card">
+    <h2>Bruttoløn &ndash; specifikation</h2>
 
     <div class="row">
       <span class="label">Timer i alt</span>
@@ -307,14 +389,9 @@
       <span class="value" id="outTotal">0,00 kr.</span>
     </div>
     <div class="row">
-      <span class="label">Effektiv timeløn</span>
+      <span class="label">Timeløn før skat</span>
       <span class="value" id="outAvg">0,00 kr.</span>
     </div>
-
-    <p class="hint">
-      Brutto, dvs. før skat, AM-bidrag og pension.
-      Grundlønnen gælder alle timer &ndash; tillæggene lægges oveni.
-    </p>
   </div>
 
   <!-- ================= SATSER (foldet sammen) ================= -->
@@ -347,6 +424,10 @@
           <label for="rK">K-tillæg</label>
           <input id="rK" type="text" inputmode="decimal" placeholder="9">
         </div>
+        <div class="rate">
+          <label for="rAm">AM-bidrag i %</label>
+          <input id="rAm" type="text" inputmode="decimal" placeholder="8">
+        </div>
       </div>
 
       <p class="hint">
@@ -361,13 +442,17 @@
 <!-- Fast bjælke: står altid nederst på skærmen -->
 <div class="bar">
   <div class="bar-inner">
-    <div>
+    <div class="drop">
       <div class="cap">Timer</div>
-      <div class="mid" id="barHours">0,00 t</div>
+      <div class="num small" id="barHours">0,00 t</div>
+    </div>
+    <div>
+      <div class="cap">Brutto</div>
+      <div class="num small" id="barGross">0,00 kr.</div>
     </div>
     <div class="right">
-      <div class="cap">Bruttoløn</div>
-      <div class="big" id="barTotal">0,00 kr.</div>
+      <div class="cap">Udbetalt</div>
+      <div class="num big" id="barNet">0,00 kr.</div>
     </div>
   </div>
 </div>
@@ -375,16 +460,19 @@
 <script>
 /* =========================================================
    1) Standardsatser
-   Tallene her er dem, der står som grå skygge i satsfelterne.
-   Et tomt satsfelt betyder "brug standardsatsen".
+   Tallene her er dem, der står som grå skygge i felterne.
+   Et tomt felt betyder "brug standardsatsen".
    ========================================================= */
 const DEFAULTS = {
-  base:    220,   // grundløn, gælder alle timer
-  eve:      74,   // hverdag 14-18
-  night:   143,   // alle dage 18-06
-  weekend: 114,   // lør 06-18 + søn 06-12
-  sunPm:   143,   // søn 12-18
-  k:         9    // K-tillæg
+  base:    220,    // grundløn, gælder alle timer
+  eve:      74,    // hverdag 14-18
+  night:   143,    // alle dage 18-06
+  weekend: 114,    // lør 06-18 + søn 06-12
+  sunPm:   143,    // søn 12-18
+  k:         9,    // K-tillæg
+  am:        8,    // AM-bidrag i procent
+  tax:      43,    // trækprocent
+  fradrag: 5500    // månedsfradrag i kroner
 };
 
 /* =========================================================
@@ -397,7 +485,7 @@ const el = id => document.getElementById(id);
    til 0, så der aldrig kan stå NaN i resultatet. */
 function parseNumber(text) {
   const cleaned = String(text)
-    .replace(/\s/g, '')   // fjern mellemrum, fx "1 200"
+    .replace(/\s/g, '')   // fjern mellemrum, fx "5 500"
     .replace(',', '.');   // dansk komma -> punktum, som JS forstår
 
   const n = parseFloat(cleaned);
@@ -427,6 +515,12 @@ function formatKr(amount) {
   }) + ' kr.';
 }
 
+/* Det samme, men med minus foran: "-460,00 kr." */
+function formatMinus(amount) {
+  const safe = isFinite(amount) ? amount : 0;
+  return safe === 0 ? formatKr(0) : '−' + formatKr(safe);
+}
+
 /* Timetal med to decimaler: 7.5 -> "7,50 t" */
 function formatHours(hours) {
   const safe = isFinite(hours) ? hours : 0;
@@ -436,9 +530,9 @@ function formatHours(hours) {
   }) + ' t';
 }
 
-/* Timetal uden unødige decimaler, til advarslen: 7.5 -> "7,5" */
-function shortHours(hours) {
-  return String(hours).replace('.', ',');
+/* Tal uden unødige decimaler, til de små forklaringer: 7.5 -> "7,5" */
+function shortNumber(value) {
+  return String(value).replace('.', ',');
 }
 
 /* =========================================================
@@ -464,14 +558,13 @@ const KINDS = [
    4) Selve beregningen. Kaldes hver gang der tastes.
    ========================================================= */
 function calculate() {
-  // Satserne, som de står lige nu (tomt felt = standardsats)
+  /* ----- Del 1: bruttolønnen ----- */
   const base  = readRate('rBase', DEFAULTS.base);
   const kRate = readRate('rK',    DEFAULTS.k);
 
-  let hoursAll   = 0;   // alle timer lagt sammen
-  let supplements = 0;  // alle tillæg lagt sammen (uden grundløn)
+  let hoursAll    = 0;   // alle timer lagt sammen
+  let supplements = 0;   // alle tillæg lagt sammen (uden grundløn)
 
-  // Gå de fem slags timer igennem
   KINDS.forEach(kind => {
     const hours = readHours(kind.hours);
     // "Normale timer" har ingen sats - de får kun grundlønnen
@@ -484,7 +577,7 @@ function calculate() {
     // Hvad er én time af den slags værd? Vises ved siden af feltet.
     el(kind.per).textContent = formatKr(base + rate) + '/t';
 
-    // Linjen i resultatet ("Normale timer" har ingen egen linje)
+    // Linjen i specifikationen ("Normale timer" har ingen egen linje)
     if (kind.row) {
       el(kind.out).textContent = formatKr(pay);
       el(kind.lbl).textContent = formatHours(hours) + ' × ' + formatKr(rate);
@@ -496,21 +589,44 @@ function calculate() {
   let kHours = readHours('hK');
   if (kHours > hoursAll) {
     kHours = hoursAll;                       // regn med loftet
-    el('capK').textContent = shortHours(hoursAll);
+    el('capK').textContent = shortNumber(hoursAll);
     el('warnK').classList.add('show');
   } else {
     el('warnK').classList.remove('show');
   }
 
-  const payK = kHours * kRate;
-  el('perK').textContent = '+' + formatKr(kRate) + '/t';
-
-  // Grundløn på alle timer, plus alle tillæg oveni
+  const payK    = kHours * kRate;
   const basePay = hoursAll * base;
   const gross   = basePay + supplements + payK;
-  const avg     = hoursAll > 0 ? gross / hoursAll : 0;   // undgå division med 0
 
-  // Skriv resultatet
+  el('perK').textContent = '+' + formatKr(kRate) + '/t';
+
+  /* ----- Del 2: skatten -----
+     Sådan gør en dansk lønseddel:
+       1. AM-bidrag på 8 % trækkes af hele bruttolønnen
+       2. Det der er tilbage er grundlaget
+       3. Fradraget trækkes fra grundlaget
+       4. Trækprocenten lægges på resten - aldrig på et negativt beløb
+       5. Udbetalt = brutto minus AM-bidrag minus A-skat            */
+  const amPct   = readRate('rAm',      DEFAULTS.am);
+  const taxPct  = readRate('rTax',     DEFAULTS.tax);
+  const fradrag = readRate('rFradrag', DEFAULTS.fradrag);
+
+  const am      = gross * amPct / 100;
+  const basis   = gross - am;
+
+  // Er fradraget større end grundlaget, bruges kun det der er plads til
+  const usedDeduction = Math.min(fradrag, basis);
+  const taxable       = basis - usedDeduction;   // aldrig under 0
+  const tax           = taxable * taxPct / 100;
+
+  const net      = basis - tax;
+  const netHour  = hoursAll > 0 ? net   / hoursAll : 0;
+  const avgHour  = hoursAll > 0 ? gross / hoursAll : 0;
+
+  /* ----- Del 3: skriv det hele på siden ----- */
+
+  // Bruttospecifikation
   el('outHours').textContent = formatHours(hoursAll);
   el('outBase').textContent  = formatKr(basePay);
   el('lblBase').textContent  = formatHours(hoursAll) + ' × ' + formatKr(base);
@@ -520,11 +636,25 @@ function calculate() {
   el('rowK').classList.toggle('zero', kHours === 0);
 
   el('outTotal').textContent = formatKr(gross);
-  el('outAvg').textContent   = formatKr(avg);
+  el('outAvg').textContent   = formatKr(avgHour);
+
+  // Skatteopgørelsen
+  el('taxGross').textContent     = formatKr(gross);
+  el('taxAm').textContent        = formatMinus(am);
+  el('lblAm').textContent        = shortNumber(amPct) + ' % af bruttoløn';
+  el('taxBasis').textContent     = formatKr(basis);
+  el('taxDeduction').textContent = formatMinus(usedDeduction);
+  el('taxTaxable').textContent   = formatKr(taxable);
+  el('taxAmount').textContent    = formatMinus(tax);
+  el('lblTax').textContent       = shortNumber(taxPct) + ' % af beløbet til beskatning';
+
+  el('outNet').textContent     = formatKr(net);
+  el('outNetHour').textContent = formatKr(netHour);
 
   // Den faste bjælke i bunden
   el('barHours').textContent = formatHours(hoursAll);
-  el('barTotal').textContent = formatKr(gross);
+  el('barGross').textContent = formatKr(gross);
+  el('barNet').textContent   = formatKr(net);
 }
 
 /* =========================================================
