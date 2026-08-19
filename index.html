@@ -13,6 +13,7 @@
     --card:      #ffffff;
     --ink:       #14181f;
     --muted:     #5c6572;
+    --ghost:     #9aa3ae;   /* de grå "skygge-tal" i felterne */
     --line:      #dfe3e9;
     --accent:    #14607a;
     --accent-bg: #e7f2f6;
@@ -78,6 +79,10 @@
     appearance: none;
   }
 
+  /* Standardsatsen står som en grå skygge i feltet.
+     Man skriver bare sit eget tal ovenpå - intet at slette først. */
+  input::placeholder { color: var(--ghost); opacity: 1; }
+
   select {
     /* lille pil, så det ligner et dropdown-felt */
     background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'%3E%3Cpath fill='%235c6572' d='M1 1l5 5 5-5'/%3E%3C/svg%3E");
@@ -133,6 +138,53 @@
     cursor: pointer;
   }
   .del:active { background: var(--bg); }
+
+  /* ---------- K-tillæg: en knap man trykker til og fra ---------- */
+  .k-toggle {
+    width: 100%;
+    min-height: 52px;
+    margin-top: 2px;
+    padding: 10px 14px;
+    font-size: 1rem;
+    font-weight: 600;
+    font-family: inherit;
+    color: var(--muted);
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  /* Lille firkant der bliver til et flueben når tillægget er slået til */
+  .k-toggle .box {
+    width: 24px; height: 24px;
+    flex: none;
+    border: 2px solid var(--line);
+    border-radius: 7px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.95rem;
+    line-height: 1;
+    color: transparent;
+  }
+
+  .k-toggle .k-note { margin-left: auto; font-weight: 500; font-size: 0.85rem; }
+
+  /* Tændt tilstand */
+  .k-toggle.on {
+    color: var(--accent);
+    border-color: var(--accent);
+    background: var(--accent-bg);
+  }
+  .k-toggle.on .box {
+    border-color: var(--accent);
+    background: var(--accent);
+    color: #fff;
+  }
 
   /* Lille opsummering nederst i hver vagt */
   .shift-sum {
@@ -200,27 +252,38 @@
 
     <div class="field">
       <label for="baseRate">Grundløn &ndash; alle timer</label>
-      <input id="baseRate" type="text" inputmode="decimal" value="220">
+      <!-- Bemærk: value er tom, tallet ligger i placeholder.
+           Feltet ser udfyldt ud, men man kan skrive direkte i det. -->
+      <input id="baseRate" type="text" inputmode="decimal" placeholder="220">
     </div>
 
     <div class="grid2">
       <div class="field">
         <label for="rateEve">Tillæg 14&ndash;18<br>hverdag</label>
-        <input id="rateEve" type="text" inputmode="decimal" value="74">
+        <input id="rateEve" type="text" inputmode="decimal" placeholder="74">
       </div>
       <div class="field">
         <label for="rateNight">Tillæg 18&ndash;06<br>alle dage</label>
-        <input id="rateNight" type="text" inputmode="decimal" value="143">
+        <input id="rateNight" type="text" inputmode="decimal" placeholder="143">
       </div>
       <div class="field">
         <label for="rateWeekend">Weekendtillæg<br>lør 06&ndash;18, søn 06&ndash;12</label>
-        <input id="rateWeekend" type="text" inputmode="decimal" value="114">
+        <input id="rateWeekend" type="text" inputmode="decimal" placeholder="114">
       </div>
       <div class="field">
         <label for="rateSunPm">Søndag 12&ndash;18<br>tillæg</label>
-        <input id="rateSunPm" type="text" inputmode="decimal" value="143">
+        <input id="rateSunPm" type="text" inputmode="decimal" placeholder="143">
+      </div>
+      <div class="field">
+        <label for="rateK">K-tillæg<br>slås til pr. vagt</label>
+        <input id="rateK" type="text" inputmode="decimal" placeholder="9">
       </div>
     </div>
+
+    <p class="hint">
+      De grå tal er standardsatserne. Lad feltet stå tomt for at bruge dem,
+      eller skriv dit eget tal ovenpå &ndash; du behøver ikke slette noget først.
+    </p>
   </div>
 
   <!-- ================= VAGTER ================= -->
@@ -259,6 +322,10 @@
       <span class="label">Søndag 12&ndash;18<small id="lblSunPm">0,00 t</small></span>
       <span class="value" id="outSunPm">0,00 kr.</span>
     </div>
+    <div class="row" id="rowK">
+      <span class="label">K-tillæg<small id="lblK">0,00 t</small></span>
+      <span class="value" id="outK">0,00 kr.</span>
+    </div>
 
     <div class="row total">
       <span class="label">Bruttoløn i alt</span>
@@ -271,6 +338,8 @@
 
     <p class="hint">
       Beregningen er brutto, dvs. før skat, AM-bidrag og pension.
+      <b>K-tillæg</b> slås til på den enkelte vagt og gælder alle vagtens timer,
+      oveni de andre tillæg.
       <b>Bemærk:</b> 18&ndash;06 giver nattillæg alle ugedage &ndash; også nat til
       og efter lørdag og søndag. Vagter over midnat regnes videre på næste dags satser.
     </p>
@@ -280,13 +349,27 @@
 
 <script>
 /* =========================================================
-   1) Hjælpefunktioner: læs tal, skriv beløb og timer pænt
+   1) Standardsatser
+   Tallene her er dem, der står som grå skygge i felterne.
+   Et tomt felt betyder "brug standardsatsen".
+   ========================================================= */
+const DEFAULTS = {
+  base:    220,   // grundløn, alle timer
+  eve:      74,   // hverdag 14-18
+  night:   143,   // alle dage 18-06
+  weekend: 114,   // lør 06-18 + søn 06-12
+  sunPm:   143,   // søn 12-18
+  k:         9    // K-tillæg, slås til pr. vagt
+};
+
+/* =========================================================
+   2) Hjælpefunktioner: læs tal, skriv beløb og timer pænt
    ========================================================= */
 const el = id => document.getElementById(id);
 
-/* Læs et tal fra et felt.
-   Accepterer både 7,5 og 7.5. Tomt, sludder eller negativt bliver
-   til 0, så der aldrig kan stå NaN i resultatet. */
+/* Læs et tal fra en tekst.
+   Accepterer både 7,5 og 7.5. Sludder eller negativt bliver til 0,
+   så der aldrig kan stå NaN i resultatet. */
 function parseNumber(text) {
   const cleaned = String(text)
     .replace(/\s/g, '')   // fjern mellemrum, fx "1 200"
@@ -295,6 +378,15 @@ function parseNumber(text) {
   const n = parseFloat(cleaned);
   if (!isFinite(n) || n < 0) return 0;
   return n;
+}
+
+/* Læs en sats fra et felt.
+   Tomt felt = brug standardsatsen (det grå tal man kan se i feltet).
+   Skriver man 0, betyder det 0 - så kan man slå et tillæg fra. */
+function readRate(id, fallback) {
+  const raw = el(id).value.trim();
+  if (raw === '') return fallback;
+  return parseNumber(raw);
 }
 
 /* Dansk beløb med to decimaler: 1234.5 -> "1.234,50 kr." */
@@ -329,9 +421,9 @@ function parseTime(text) {
 }
 
 /* =========================================================
-   2) Tillægsreglerne
+   3) Tillægsreglerne efter klokkeslæt
    Hver eneste minut i en vagt får ét af disse "stempler".
-   Rækkefølgen i funktionen er reglernes rangorden.
+   K-tillægget står udenfor - det følger vagten, ikke uret.
    ========================================================= */
 const DAYS = ['Mandag','Tirsdag','Onsdag','Torsdag','Fredag','Lørdag','Søndag'];
 
@@ -355,7 +447,7 @@ function bandFor(dayIndex, minuteOfDay) {
 }
 
 /* =========================================================
-   3) Vagt-rækkerne i UI'et
+   4) Vagt-rækkerne i UI'et
    ========================================================= */
 const shiftsBox = el('shifts');
 
@@ -390,8 +482,22 @@ function addShift(day = 0, from = '', to = '') {
       </div>
     </div>
 
+    <button class="k-toggle" type="button" aria-pressed="false">
+      <span class="box">&#10003;</span>
+      <span>K-tillæg</span>
+      <span class="k-note"></span>
+    </button>
+
     <div class="shift-sum">0,00 t &middot; 0,00 kr.</div>
   `;
+
+  // K-tillæg: tryk til og fra. Klassen "on" er hukommelsen.
+  const kButton = box.querySelector('.k-toggle');
+  kButton.addEventListener('click', () => {
+    const isOn = kButton.classList.toggle('on');
+    kButton.setAttribute('aria-pressed', isOn ? 'true' : 'false');
+    calculate();
+  });
 
   // Slet-knappen fjerner rækken (der skal altid være mindst én tilbage)
   box.querySelector('.del').addEventListener('click', () => {
@@ -405,7 +511,7 @@ function addShift(day = 0, from = '', to = '') {
 }
 
 /* =========================================================
-   4) Beregn én vagt
+   5) Beregn én vagt
    Vi går minut for minut gennem vagten og lægger hvert minut
    i den rigtige tillægs-bunke. Så rammer vi altid grænserne
    præcist - også når en vagt løber over midnat.
@@ -433,26 +539,29 @@ function minutesPerBand(dayIndex, from, to) {
 }
 
 /* =========================================================
-   5) Saml det hele og skriv resultatet på siden
+   6) Saml det hele og skriv resultatet på siden
    ========================================================= */
 function calculate() {
-  // Satserne, som de står i felterne lige nu
-  const base = parseNumber(el('baseRate').value);
+  // Satserne, som de står i felterne lige nu (tomt felt = standardsats)
+  const base = readRate('baseRate', DEFAULTS.base);
+  const kRate = readRate('rateK', DEFAULTS.k);
   const rate = {
-    plain:   0,                                   // hverdag 06-14: intet tillæg
-    eve:     parseNumber(el('rateEve').value),     // hverdag 14-18
-    night:   parseNumber(el('rateNight').value),   // alle dage 18-06
-    weekend: parseNumber(el('rateWeekend').value), // lør 06-18 + søn 06-12
-    sunPm:   parseNumber(el('rateSunPm').value)    // søn 12-18
+    plain:   0,                                        // hverdag 06-14: intet tillæg
+    eve:     readRate('rateEve',     DEFAULTS.eve),     // hverdag 14-18
+    night:   readRate('rateNight',   DEFAULTS.night),   // alle dage 18-06
+    weekend: readRate('rateWeekend', DEFAULTS.weekend), // lør 06-18 + søn 06-12
+    sunPm:   readRate('rateSunPm',   DEFAULTS.sunPm)    // søn 12-18
   };
 
   // Læg alle vagternes minutter sammen, bunke for bunke
   const total = { plain: 0, eve: 0, night: 0, weekend: 0, sunPm: 0 };
+  let kMinutes = 0;   // minutter i vagter hvor K-tillægget er trykket til
 
   Array.from(shiftsBox.children).forEach((box, index) => {
     const day  = Number(box.querySelector('.day').value);
     const from = parseTime(box.querySelector('.from').value);
     const to   = parseTime(box.querySelector('.to').value);
+    const kOn  = box.querySelector('.k-toggle').classList.contains('on');
 
     const bands = minutesPerBand(day, from, to);
 
@@ -465,7 +574,14 @@ function calculate() {
       total[key]   += bands[key];
     }
 
+    // K-tillægget gælder hele vagten, uanset klokkeslæt
+    if (kOn) {
+      kMinutes  += shiftMinutes;
+      shiftPay  += (shiftMinutes / 60) * kRate;
+    }
+
     box.querySelector('.shift-title').textContent = 'Vagt ' + (index + 1);
+    box.querySelector('.k-note').textContent = kOn ? '+' + formatKr(kRate) + '/t' : '';
     box.querySelector('.shift-sum').textContent =
       formatHours(shiftMinutes / 60) + ' · ' + formatKr(shiftPay);
   });
@@ -477,6 +593,7 @@ function calculate() {
     hours[key] = total[key] / 60;
     hoursAll  += hours[key];
   }
+  const kHours = kMinutes / 60;
 
   // De enkelte beløb
   const basePay = hoursAll * base;                  // grundløn på ALLE timer
@@ -484,8 +601,9 @@ function calculate() {
   const payNight   = hours.night   * rate.night;
   const payWeekend = hours.weekend * rate.weekend;
   const paySunPm   = hours.sunPm   * rate.sunPm;
+  const payK       = kHours        * kRate;         // K-tillæg pr. time i de valgte vagter
 
-  const gross = basePay + payEve + payNight + payWeekend + paySunPm;
+  const gross = basePay + payEve + payNight + payWeekend + paySunPm + payK;
   const avg   = hoursAll > 0 ? gross / hoursAll : 0;   // undgå division med 0
 
   // Skriv tallene på siden
@@ -504,18 +622,27 @@ function calculate() {
   showBand('rowNight',   'outNight',   'lblNight',   hours.night,   rate.night,   payNight);
   showBand('rowWeekend', 'outWeekend', 'lblWeekend', hours.weekend, rate.weekend, payWeekend);
   showBand('rowSunPm',   'outSunPm',   'lblSunPm',   hours.sunPm,   rate.sunPm,   paySunPm);
+  showBand('rowK',       'outK',       'lblK',       kHours,        kRate,        payK);
 
   el('outTotal').textContent = formatKr(gross);
   el('outAvg').textContent   = formatKr(avg);
 }
 
 /* =========================================================
-   6) Live-opdatering
+   7) Live-opdatering
    Ét enkelt lyt på hele siden fanger også de vagt-felter,
    der først bliver oprettet senere.
    ========================================================= */
 document.addEventListener('input',  calculate);
 document.addEventListener('change', calculate);
+
+/* Tryk på et sats-felt markerer hele tallet, så det man skriver
+   erstatter det gamle. Man skal aldrig slette først. */
+document.addEventListener('focusin', event => {
+  if (event.target.matches('input[inputmode="decimal"]')) {
+    event.target.select();
+  }
+});
 
 el('addShift').addEventListener('click', () => {
   addShift();
