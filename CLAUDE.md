@@ -42,3 +42,15 @@ The Vercel project is **not** connected to GitHub — files were uploaded
 directly. A `git push` therefore does **not** deploy. After changing
 `index.html`, deploy explicitly with the Vercel MCP `deploy_to_vercel` tool
 targeting production.
+
+**Every change gets deployed, without being asked.** Do not wait for a
+"deploy it" instruction — finishing a change means the live site is updated.
+
+**Do not hand me new links or files.** The address is always
+https://loenberegner.vercel.app and it does not change. So:
+
+- Do not send the `index.html` file as an attachment.
+- Do not quote the per-deployment URL (the long
+  `loenberegner-xxxxx-...vercel.app` one) — it is noise.
+
+Just say it is deployed, and describe what changed.
