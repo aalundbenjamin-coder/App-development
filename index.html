@@ -102,12 +102,16 @@
     box-shadow: 0 0 0 3px var(--accent-bg);
   }
 
-  /* K-tillægsfeltet står lidt for sig selv, fordi det er "heraf"-timer */
-  .hfield.sub-of {
+  /* Overskrift over "heraf"-felterne, så det er tydeligt at de er
+     ekstra tillæg på timer, man allerede har skrevet ind ovenfor. */
+  .extras-head {
     border-top: 1px dashed var(--line);
-    padding-top: 14px;
-    margin-top: 18px;
+    margin-top: 20px;
+    padding-top: 16px;
+    margin-bottom: 14px;
   }
+  .extras-head .t { font-weight: 700; font-size: 0.9rem; }
+  .extras-head .d { color: var(--muted); font-size: 0.82rem; }
 
   /* Lille advarsel under et felt. Skjult indtil JS tænder den. */
   .warn {
@@ -282,14 +286,29 @@
       <input id="hSunPm" type="text" inputmode="decimal" placeholder="0">
     </div>
 
-    <!-- K-tillæg er "heraf"-timer: de er allerede talt med ovenfor -->
-    <div class="hfield sub-of">
+    <!-- Ekstra tillæg: "heraf"-timer, som allerede er talt med ovenfor -->
+    <div class="extras-head">
+      <div class="t">Ekstra tillæg</div>
+      <div class="d">Timer du allerede har skrevet ind ovenfor, og som oveni
+        gav et ekstra tillæg. De lægger ikke flere timer til.</div>
+    </div>
+
+    <div class="hfield">
       <div class="hlabel">
-        <span class="name">Heraf timer med K-tillæg<small>lægges oveni de timer du allerede har skrevet</small></span>
+        <span class="name">Heraf timer med K-tillæg</span>
         <span class="per" id="perK">+9,00 kr./t</span>
       </div>
       <input id="hK" type="text" inputmode="decimal" placeholder="0">
       <p class="warn" id="warnK">Kan ikke være flere end dine timer i alt &ndash; regnet med <span id="capK">0</span> t.</p>
+    </div>
+
+    <div class="hfield">
+      <div class="hlabel">
+        <span class="name">Heraf timer som lastoptager</span>
+        <span class="per" id="perLast">+52,00 kr./t</span>
+      </div>
+      <input id="hLast" type="text" inputmode="decimal" placeholder="0">
+      <p class="warn" id="warnLast">Kan ikke være flere end dine timer i alt &ndash; regnet med <span id="capLast">0</span> t.</p>
     </div>
   </div>
 
@@ -383,6 +402,10 @@
       <span class="label">K-tillæg<small id="lblK">0,00 t</small></span>
       <span class="value" id="outK">0,00 kr.</span>
     </div>
+    <div class="row" id="rowLast">
+      <span class="label">Lastoptager<small id="lblLast">0,00 t</small></span>
+      <span class="value" id="outLast">0,00 kr.</span>
+    </div>
 
     <div class="row total">
       <span class="label">Bruttoløn i alt</span>
@@ -423,6 +446,10 @@
         <div class="rate">
           <label for="rK">K-tillæg</label>
           <input id="rK" type="text" inputmode="decimal" placeholder="9">
+        </div>
+        <div class="rate">
+          <label for="rLast">Lastoptager</label>
+          <input id="rLast" type="text" inputmode="decimal" placeholder="52">
         </div>
         <div class="rate">
           <label for="rAm">AM-bidrag i %</label>
@@ -470,6 +497,7 @@ const DEFAULTS = {
   weekend: 114,    // lør 06-18 + søn 06-12
   sunPm:   143,    // søn 12-18
   k:         9,    // K-tillæg
+  last:     52,    // lastoptager
   am:        8,    // AM-bidrag i procent
   tax:      43,    // trækprocent
   fradrag: 5500    // månedsfradrag i kroner
@@ -537,10 +565,9 @@ function shortNumber(value) {
 
 /* =========================================================
    3) De fem slags timer
-   Hver linje: hvilket felt timerne står i, hvilken sats de får
-   oveni grundlønnen, og hvor resultatet skal skrives hen.
-   K-tillægget står for sig selv nedenfor, fordi det er
-   "heraf"-timer, der allerede er talt med i én af de fem.
+   Timerne deles op efter klokkeslæt. Hver linje siger hvilket
+   felt timerne står i, hvilken sats de får oveni grundlønnen,
+   og hvor resultatet skal skrives hen.
    ========================================================= */
 const KINDS = [
   { key: 'plain',   hours: 'hPlain',   rate: null,        per: 'perPlain'   },
@@ -555,12 +582,24 @@ const KINDS = [
 ];
 
 /* =========================================================
-   4) Selve beregningen. Kaldes hver gang der tastes.
+   4) De ekstra tillæg
+   Disse timer er allerede talt med i én af de fem ovenfor.
+   De lægger altså ikke flere timer til - kun flere kroner.
+   Skal der et nyt tillæg til, kan det tilføjes her.
+   ========================================================= */
+const EXTRAS = [
+  { key: 'k',    hours: 'hK',    rate: 'rK',    per: 'perK',
+    warn: 'warnK',    cap: 'capK',    row: 'rowK',    out: 'outK',    lbl: 'lblK'    },
+  { key: 'last', hours: 'hLast', rate: 'rLast', per: 'perLast',
+    warn: 'warnLast', cap: 'capLast', row: 'rowLast', out: 'outLast', lbl: 'lblLast' }
+];
+
+/* =========================================================
+   5) Selve beregningen. Kaldes hver gang der tastes.
    ========================================================= */
 function calculate() {
-  /* ----- Del 1: bruttolønnen ----- */
-  const base  = readRate('rBase', DEFAULTS.base);
-  const kRate = readRate('rK',    DEFAULTS.k);
+  /* ----- Del 1: timerne og bruttolønnen ----- */
+  const base = readRate('rBase', DEFAULTS.base);
 
   let hoursAll    = 0;   // alle timer lagt sammen
   let supplements = 0;   // alle tillæg lagt sammen (uden grundløn)
@@ -585,23 +624,33 @@ function calculate() {
     }
   });
 
-  // K-tillæg: "heraf"-timer, så de kan ikke være flere end timerne i alt
-  let kHours = readHours('hK');
-  if (kHours > hoursAll) {
-    kHours = hoursAll;                       // regn med loftet
-    el('capK').textContent = shortNumber(hoursAll);
-    el('warnK').classList.add('show');
-  } else {
-    el('warnK').classList.remove('show');
-  }
+  /* ----- Del 2: de ekstra tillæg -----
+     De kan ikke gælde flere timer, end man har i alt. */
+  EXTRAS.forEach(extra => {
+    const rate = readRate(extra.rate, DEFAULTS[extra.key]);
+    let hours  = readHours(extra.hours);
 
-  const payK    = kHours * kRate;
+    if (hours > hoursAll) {
+      hours = hoursAll;                       // regn med loftet
+      el(extra.cap).textContent = shortNumber(hoursAll);
+      el(extra.warn).classList.add('show');
+    } else {
+      el(extra.warn).classList.remove('show');
+    }
+
+    const pay = hours * rate;
+    supplements += pay;                       // kroner, men ingen ekstra timer
+
+    el(extra.per).textContent = '+' + formatKr(rate) + '/t';
+    el(extra.out).textContent = formatKr(pay);
+    el(extra.lbl).textContent = formatHours(hours) + ' × ' + formatKr(rate);
+    el(extra.row).classList.toggle('zero', hours === 0);
+  });
+
   const basePay = hoursAll * base;
-  const gross   = basePay + supplements + payK;
+  const gross   = basePay + supplements;
 
-  el('perK').textContent = '+' + formatKr(kRate) + '/t';
-
-  /* ----- Del 2: skatten -----
+  /* ----- Del 3: skatten -----
      Sådan gør en dansk lønseddel:
        1. AM-bidrag på 8 % trækkes af hele bruttolønnen
        2. Det der er tilbage er grundlaget
@@ -612,29 +661,24 @@ function calculate() {
   const taxPct  = readRate('rTax',     DEFAULTS.tax);
   const fradrag = readRate('rFradrag', DEFAULTS.fradrag);
 
-  const am      = gross * amPct / 100;
-  const basis   = gross - am;
+  const am    = gross * amPct / 100;
+  const basis = gross - am;
 
   // Er fradraget større end grundlaget, bruges kun det der er plads til
   const usedDeduction = Math.min(fradrag, basis);
   const taxable       = basis - usedDeduction;   // aldrig under 0
   const tax           = taxable * taxPct / 100;
 
-  const net      = basis - tax;
-  const netHour  = hoursAll > 0 ? net   / hoursAll : 0;
-  const avgHour  = hoursAll > 0 ? gross / hoursAll : 0;
+  const net     = basis - tax;
+  const netHour = hoursAll > 0 ? net   / hoursAll : 0;
+  const avgHour = hoursAll > 0 ? gross / hoursAll : 0;
 
-  /* ----- Del 3: skriv det hele på siden ----- */
+  /* ----- Del 4: skriv det hele på siden ----- */
 
   // Bruttospecifikation
   el('outHours').textContent = formatHours(hoursAll);
   el('outBase').textContent  = formatKr(basePay);
   el('lblBase').textContent  = formatHours(hoursAll) + ' × ' + formatKr(base);
-
-  el('outK').textContent = formatKr(payK);
-  el('lblK').textContent = formatHours(kHours) + ' × ' + formatKr(kRate);
-  el('rowK').classList.toggle('zero', kHours === 0);
-
   el('outTotal').textContent = formatKr(gross);
   el('outAvg').textContent   = formatKr(avgHour);
 
@@ -658,7 +702,7 @@ function calculate() {
 }
 
 /* =========================================================
-   5) Live-opdatering
+   6) Live-opdatering
    Ét lyt på hele siden dækker alle felterne.
    ========================================================= */
 document.addEventListener('input', calculate);
