@@ -289,14 +289,6 @@
       <input id="hWeekend" type="text" inputmode="decimal" placeholder="0">
     </div>
 
-    <div class="hfield">
-      <div class="hlabel">
-        <span class="name">Søndag 12&ndash;18<small>+143 kr.</small></span>
-        <span class="per" id="perSunPm">363,00 kr./t</span>
-      </div>
-      <input id="hSunPm" type="text" inputmode="decimal" placeholder="0">
-    </div>
-
     <!-- Ekstra tillæg: "heraf"-timer, som allerede er talt med ovenfor -->
     <div class="extras-head">
       <div class="t">Ekstra tillæg</div>
@@ -447,10 +439,6 @@
       <span class="label">Weekendtillæg<small id="lblWeekend">0,00 t</small></span>
       <span class="value" id="outWeekend">0,00 kr.</span>
     </div>
-    <div class="row" id="rowSunPm">
-      <span class="label">Søndag 12&ndash;18<small id="lblSunPm">0,00 t</small></span>
-      <span class="value" id="outSunPm">0,00 kr.</span>
-    </div>
     <div class="row" id="rowK">
       <span class="label">K-tillæg<small id="lblK">0,00 t</small></span>
       <span class="value" id="outK">0,00 kr.</span>
@@ -507,10 +495,6 @@
         <div class="rate">
           <label for="rWeekend">Weekendtillæg</label>
           <input id="rWeekend" type="text" inputmode="decimal" placeholder="114">
-        </div>
-        <div class="rate">
-          <label for="rSunPm">Søndag 12&ndash;18</label>
-          <input id="rSunPm" type="text" inputmode="decimal" placeholder="143">
         </div>
         <div class="rate">
           <label for="rK">K-tillæg</label>
@@ -580,7 +564,6 @@ const DEFAULTS = {
   eve:      74,      // hverdag 14-18
   night:   143,      // alle dage 18-06
   weekend: 114,      // lør 06-18 + søn 06-12
-  sunPm:   143,      // søn 12-18
   k:         9,      // K-tillæg
   last:     52,      // lastoptager
   ot1:      48.70,   // overtid 1
@@ -665,9 +648,7 @@ const KINDS = [
   { key: 'night',   hours: 'hNight',   rate: 'rNight',    per: 'perNight',
     row: 'rowNight',   out: 'outNight',   lbl: 'lblNight'   },
   { key: 'weekend', hours: 'hWeekend', rate: 'rWeekend',  per: 'perWeekend',
-    row: 'rowWeekend', out: 'outWeekend', lbl: 'lblWeekend' },
-  { key: 'sunPm',   hours: 'hSunPm',   rate: 'rSunPm',    per: 'perSunPm',
-    row: 'rowSunPm',   out: 'outSunPm',   lbl: 'lblSunPm'   }
+    row: 'rowWeekend', out: 'outWeekend', lbl: 'lblWeekend' }
 ];
 
 /* =========================================================
