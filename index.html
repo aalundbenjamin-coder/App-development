@@ -59,6 +59,7 @@
   /* ---------- Timefelterne ---------- */
   .hfield { margin-bottom: 16px; }
   .hfield:last-child { margin-bottom: 0; }
+  .hfield.tight { margin-bottom: 12px; }
 
   /* Navnet til venstre, hvad timen er værd til højre */
   .hlabel {
@@ -112,6 +113,16 @@
   }
   .extras-head .t { font-weight: 700; font-size: 0.9rem; }
   .extras-head .d { color: var(--muted); font-size: 0.82rem; }
+
+  /* Lille mellemoverskrift inde i gruppen */
+  .group-label {
+    font-weight: 700;
+    font-size: 0.82rem;
+    color: var(--muted);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    margin: 20px 0 10px;
+  }
 
   /* Lille advarsel under et felt. Skjult indtil JS tænder den. */
   .warn {
@@ -293,7 +304,7 @@
         gav et ekstra tillæg. De lægger ikke flere timer til.</div>
     </div>
 
-    <div class="hfield">
+    <div class="hfield tight">
       <div class="hlabel">
         <span class="name">Heraf timer med K-tillæg</span>
         <span class="per" id="perK">+9,00 kr./t</span>
@@ -302,7 +313,7 @@
       <p class="warn" id="warnK">Kan ikke være flere end dine timer i alt &ndash; regnet med <span id="capK">0</span> t.</p>
     </div>
 
-    <div class="hfield">
+    <div class="hfield tight">
       <div class="hlabel">
         <span class="name">Heraf timer som lastoptager</span>
         <span class="per" id="perLast">+52,00 kr./t</span>
@@ -310,6 +321,48 @@
       <input id="hLast" type="text" inputmode="decimal" placeholder="0">
       <p class="warn" id="warnLast">Kan ikke være flere end dine timer i alt &ndash; regnet med <span id="capLast">0</span> t.</p>
     </div>
+
+    <div class="group-label">Overtid</div>
+
+    <div class="hfield tight">
+      <div class="hlabel">
+        <span class="name">Heraf overtid 1</span>
+        <span class="per" id="perOt1">+48,70 kr./t</span>
+      </div>
+      <input id="hOt1" type="text" inputmode="decimal" placeholder="0">
+      <p class="warn" id="warnOt1">Kan ikke være flere end dine timer i alt &ndash; regnet med <span id="capOt1">0</span> t.</p>
+    </div>
+
+    <div class="hfield tight">
+      <div class="hlabel">
+        <span class="name">Heraf overtid 2</span>
+        <span class="per" id="perOt2">+76,80 kr./t</span>
+      </div>
+      <input id="hOt2" type="text" inputmode="decimal" placeholder="0">
+      <p class="warn" id="warnOt2">Kan ikke være flere end dine timer i alt &ndash; regnet med <span id="capOt2">0</span> t.</p>
+    </div>
+
+    <div class="hfield tight">
+      <div class="hlabel">
+        <span class="name">Heraf overtid 3</span>
+        <span class="per" id="perOt3">+143,70 kr./t</span>
+      </div>
+      <input id="hOt3" type="text" inputmode="decimal" placeholder="0">
+      <p class="warn" id="warnOt3">Kan ikke være flere end dine timer i alt &ndash; regnet med <span id="capOt3">0</span> t.</p>
+    </div>
+
+    <div class="hfield">
+      <div class="hlabel">
+        <span class="name">Heraf overtid 4</span>
+        <span class="per" id="perOt4">+95,75 kr./t</span>
+      </div>
+      <input id="hOt4" type="text" inputmode="decimal" placeholder="0">
+      <p class="warn" id="warnOt4">Kan ikke være flere end dine timer i alt &ndash; regnet med <span id="capOt4">0</span> t.</p>
+    </div>
+
+    <!-- Samlet tjek: de fire overtidstrin kan ikke dække samme time -->
+    <p class="warn" id="warnOtSum">Overtid 1&ndash;4 er tilsammen <span id="otSum">0</span> t, men du har kun
+      <span id="otAll">0</span> t i alt. Tjek tallene &ndash; de er regnet med, som de står.</p>
   </div>
 
   <!-- ================= EFTER SKAT ================= -->
@@ -406,6 +459,22 @@
       <span class="label">Lastoptager<small id="lblLast">0,00 t</small></span>
       <span class="value" id="outLast">0,00 kr.</span>
     </div>
+    <div class="row" id="rowOt1">
+      <span class="label">Overtid 1<small id="lblOt1">0,00 t</small></span>
+      <span class="value" id="outOt1">0,00 kr.</span>
+    </div>
+    <div class="row" id="rowOt2">
+      <span class="label">Overtid 2<small id="lblOt2">0,00 t</small></span>
+      <span class="value" id="outOt2">0,00 kr.</span>
+    </div>
+    <div class="row" id="rowOt3">
+      <span class="label">Overtid 3<small id="lblOt3">0,00 t</small></span>
+      <span class="value" id="outOt3">0,00 kr.</span>
+    </div>
+    <div class="row" id="rowOt4">
+      <span class="label">Overtid 4<small id="lblOt4">0,00 t</small></span>
+      <span class="value" id="outOt4">0,00 kr.</span>
+    </div>
 
     <div class="row total">
       <span class="label">Bruttoløn i alt</span>
@@ -452,6 +521,22 @@
           <input id="rLast" type="text" inputmode="decimal" placeholder="52">
         </div>
         <div class="rate">
+          <label for="rOt1">Overtid 1</label>
+          <input id="rOt1" type="text" inputmode="decimal" placeholder="48,70">
+        </div>
+        <div class="rate">
+          <label for="rOt2">Overtid 2</label>
+          <input id="rOt2" type="text" inputmode="decimal" placeholder="76,80">
+        </div>
+        <div class="rate">
+          <label for="rOt3">Overtid 3</label>
+          <input id="rOt3" type="text" inputmode="decimal" placeholder="143,70">
+        </div>
+        <div class="rate">
+          <label for="rOt4">Overtid 4</label>
+          <input id="rOt4" type="text" inputmode="decimal" placeholder="95,75">
+        </div>
+        <div class="rate">
           <label for="rAm">AM-bidrag i %</label>
           <input id="rAm" type="text" inputmode="decimal" placeholder="8">
         </div>
@@ -491,16 +576,20 @@
    Et tomt felt betyder "brug standardsatsen".
    ========================================================= */
 const DEFAULTS = {
-  base:    220,    // grundløn, gælder alle timer
-  eve:      74,    // hverdag 14-18
-  night:   143,    // alle dage 18-06
-  weekend: 114,    // lør 06-18 + søn 06-12
-  sunPm:   143,    // søn 12-18
-  k:         9,    // K-tillæg
-  last:     52,    // lastoptager
-  am:        8,    // AM-bidrag i procent
-  tax:      43,    // trækprocent
-  fradrag: 5500    // månedsfradrag i kroner
+  base:    220,      // grundløn, gælder alle timer
+  eve:      74,      // hverdag 14-18
+  night:   143,      // alle dage 18-06
+  weekend: 114,      // lør 06-18 + søn 06-12
+  sunPm:   143,      // søn 12-18
+  k:         9,      // K-tillæg
+  last:     52,      // lastoptager
+  ot1:      48.70,   // overtid 1
+  ot2:      76.80,   // overtid 2
+  ot3:     143.70,   // overtid 3
+  ot4:      95.75,   // overtid 4
+  am:        8,      // AM-bidrag i procent
+  tax:      43,      // trækprocent
+  fradrag: 5500      // månedsfradrag i kroner
 };
 
 /* =========================================================
@@ -585,13 +674,24 @@ const KINDS = [
    4) De ekstra tillæg
    Disse timer er allerede talt med i én af de fem ovenfor.
    De lægger altså ikke flere timer til - kun flere kroner.
-   Skal der et nyt tillæg til, kan det tilføjes her.
+   "overtime: true" betyder, at de indgår i det samlede
+   overtidstjek nederst. Skal der et nyt tillæg til, kan det
+   tilføjes her.
    ========================================================= */
 const EXTRAS = [
   { key: 'k',    hours: 'hK',    rate: 'rK',    per: 'perK',
     warn: 'warnK',    cap: 'capK',    row: 'rowK',    out: 'outK',    lbl: 'lblK'    },
   { key: 'last', hours: 'hLast', rate: 'rLast', per: 'perLast',
-    warn: 'warnLast', cap: 'capLast', row: 'rowLast', out: 'outLast', lbl: 'lblLast' }
+    warn: 'warnLast', cap: 'capLast', row: 'rowLast', out: 'outLast', lbl: 'lblLast' },
+
+  { key: 'ot1', hours: 'hOt1', rate: 'rOt1', per: 'perOt1', overtime: true,
+    warn: 'warnOt1', cap: 'capOt1', row: 'rowOt1', out: 'outOt1', lbl: 'lblOt1' },
+  { key: 'ot2', hours: 'hOt2', rate: 'rOt2', per: 'perOt2', overtime: true,
+    warn: 'warnOt2', cap: 'capOt2', row: 'rowOt2', out: 'outOt2', lbl: 'lblOt2' },
+  { key: 'ot3', hours: 'hOt3', rate: 'rOt3', per: 'perOt3', overtime: true,
+    warn: 'warnOt3', cap: 'capOt3', row: 'rowOt3', out: 'outOt3', lbl: 'lblOt3' },
+  { key: 'ot4', hours: 'hOt4', rate: 'rOt4', per: 'perOt4', overtime: true,
+    warn: 'warnOt4', cap: 'capOt4', row: 'rowOt4', out: 'outOt4', lbl: 'lblOt4' }
 ];
 
 /* =========================================================
@@ -625,7 +725,9 @@ function calculate() {
   });
 
   /* ----- Del 2: de ekstra tillæg -----
-     De kan ikke gælde flere timer, end man har i alt. */
+     Et enkelt tillæg kan ikke gælde flere timer, end man har i alt. */
+  let overtimeHours = 0;   // overtid 1-4 lagt sammen, til tjekket nedenfor
+
   EXTRAS.forEach(extra => {
     const rate = readRate(extra.rate, DEFAULTS[extra.key]);
     let hours  = readHours(extra.hours);
@@ -638,6 +740,8 @@ function calculate() {
       el(extra.warn).classList.remove('show');
     }
 
+    if (extra.overtime) overtimeHours += hours;
+
     const pay = hours * rate;
     supplements += pay;                       // kroner, men ingen ekstra timer
 
@@ -646,6 +750,17 @@ function calculate() {
     el(extra.lbl).textContent = formatHours(hours) + ' × ' + formatKr(rate);
     el(extra.row).classList.toggle('zero', hours === 0);
   });
+
+  /* Samme time kan ikke være både overtid 1 og overtid 2. Er de fire
+     trin tilsammen flere end timerne i alt, er der nok en tastefejl.
+     Vi retter ikke selv - vi kan ikke vide hvilket trin der er forkert. */
+  if (overtimeHours > hoursAll) {
+    el('otSum').textContent = shortNumber(overtimeHours);
+    el('otAll').textContent = shortNumber(hoursAll);
+    el('warnOtSum').classList.add('show');
+  } else {
+    el('warnOtSum').classList.remove('show');
+  }
 
   const basePay = hoursAll * base;
   const gross   = basePay + supplements;
